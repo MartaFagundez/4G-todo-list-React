@@ -95,6 +95,33 @@ const Home = () => {
 		}
 	}
 
+	function completeTodoOnServer(completedTodoId) {
+		const newArray = todos.map((todo, index) => {
+			if (index === completedTodoId) {
+				return {...todo, done: !todo.done}
+			}
+			return todo;
+		});
+
+		try {
+			fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`, {
+				method: "PUT",
+				body: JSON.stringify(newArray),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
+			.then((response) => response.json())
+			.then(data => console.log("Confirmación del put", data.msg))
+			.then(() => getTodoListFromServer())
+			.catch(error => {
+				console.log(error);
+				throw error;
+			});
+		} catch (error) {
+			alert("Error al actualizar la lista de tareas en el servidor.");
+		}
+	}
 
 	function getTodoListFromServer() {
 		try {
@@ -128,10 +155,14 @@ const Home = () => {
 		removeTodoOnServer(i);
 	}
 
+	function completeTodo(i) {
+		completeTodoOnServer(i);
+	}
+
 
 	return (
-		<div className="d-flex flex-column justify-content-center align-items-center min-vh-100" style={{backgroundColor: "#f5f5f5", paddingTop: "12vh"}} >
-			<h1 className="colorPurple display-1 fw-light mb-4" style={{marginTop: "-24vh"}} >todos</h1>
+		<div className="d-flex flex-column justify-content-center align-items-center min-vh-100" style={{backgroundColor: "#f5f5f5", paddingTop: "3vh"}} >
+			<h1 className="colorPurple display-1 fw-light mb-4">todos</h1>
 			
 			<div className="d-flex flex-column w-100 shadow" style={{maxWidth: "400px"}}>
 				<input
@@ -148,18 +179,28 @@ const Home = () => {
 				<ul className="bg-white m-0 list-unstyled">
 					{todos.map((todo, index) => {
 						return (
-							<Task key={index} id={index} task={todo.label} deleteHandler={deleteTodo}></Task>
+							<Task key={index} id={index} task={todo.label} state={todo.done} deleteHandler={deleteTodo} completeHandler={completeTodo}></Task>
 						)
 					})}
 				</ul>
 
-				<p className="text-black-50 fw-light fs-6 m-0 px-3 py-2 d-block w-100">
-					{
-						todos.length > 1 ? `${todos.length} items left` 
-						: todos.length === 1 ? "1 item left" 
-						: "No tasks, add a task"
-					}
-				</p>
+				<div className="d-flex justify-content-between align-items-center py-2 px-3">
+					<p className="text-black-50 fw-light fs-6 m-0">
+						{
+							todos.length > 1 ? `${todos.length} items left` 
+							: todos.length === 1 ? "1 item left" 
+							: "No tasks, add a task"
+						}
+					</p>
+
+					<button type="button" className="btn btn-outline-danger fs-6"
+					onClick={resetTodoListOnServer}>Delete All</button>
+				</div>
+			</div>
+
+			<div className="m-4 text-center colorGray fw-light fs-6" style={{opacity: 0.5}}>
+				<p className="mb-0">Click on the task to toggle completed.</p>
+				<p>Click on the x to delete the task.</p>
 			</div>
 		</div>
 	);

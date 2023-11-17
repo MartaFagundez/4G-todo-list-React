@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-export default function Task({id, task, deleteHandler}) {
+export default function Task({id, task, state, deleteHandler, completeHandler}) {
     const [isHover, setIsHover] = useState(false);
 
   return (
@@ -8,7 +8,9 @@ export default function Task({id, task, deleteHandler}) {
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
     >
-        <li className={`fw-light fs-4 py-2 px-4 d-flex w-100 border-bottom ${isHover ? "colorGray" : "colorLightGray"}`}>
+        <li className={`fw-light fs-4 py-2 px-4 d-flex w-100 border-bottom ${isHover ? "colorGray" : "colorLightGray"} ${state ? "text-decoration-line-through" : ""}`}
+            onClick={() => completeHandler(id)}
+        >
             {task}
         </li>
 
