@@ -1,20 +1,131 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Task from "./task";
 
-//create your first component
+
 const Home = () => {
-	const [newTodo, setNewTodo] = useState("");
+	const user = "martafagundez";
+	const [newTodo, setNewTodo] = useState({label: "", done: false});
 	const [todos, setTodos] = useState([]);
+
+	useEffect(() => {
+		resetTodoListOnServer();
+
+	}, []);
+
+	
+	function resetTodoListOnServer() {
+		try {
+			// Eliminar la lista de tareas del usuario (si existiera)
+			fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`, {
+				method: "DELETE"
+			})
+			// Crear la lista de tareas del usuario
+			.then(() => 
+				fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`, {
+					method: "POST",
+					body: JSON.stringify([]),
+					headers: {
+						"Content-Type": "application/json"
+					}
+				})
+			)
+			// Obtener la lista de todos del servidor
+			.then(() => {
+				return fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`)
+			})
+			.then(response => response.json())
+			.then(data => {
+				setTodos(() => {
+					return data.map(todo => {
+						return {label: todo.label, done: todo.done};
+					})
+				})
+			})
+			.catch(error => {
+				console.log(error);
+				throw error;
+			});
+		} catch (error) {
+			alert("Error al reiniciar la lista de tareas en el servidor.");
+		}
+	}
+	 
+
+	function addTodoOnServer(aditionalTodo) {
+		console.log("TODOS jsonStringigy:");
+		console.log(JSON.stringify([...todos, aditionalTodo]));
+		try {
+			fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`, {
+				method: "PUT",
+				body: JSON.stringify([...todos, aditionalTodo]),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
+			.then((response) => response.json())
+			.then(data => console.log("Confirmación del put", data.msg))
+			.then(() => getTodoListFromServer())
+			.catch(error => {
+				console.log(error);
+				throw error;
+			});
+		} catch (error) {
+			alert("Error al actualizar la lista de tareas en el servidor.");
+		}
+	}
+
+	function removeTodoOnServer(deletedTodoId) {
+		try {
+			fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`, {
+				method: "PUT",
+				body: JSON.stringify(todos.filter((todo, index) => index !== deletedTodoId)),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
+			.then((response) => response.json())
+			.then(data => console.log("Confirmación del put", data.msg))
+			.then(() => getTodoListFromServer())
+			.catch(error => {
+				console.log(error);
+				throw error;
+			});
+		} catch (error) {
+			alert("Error al actualizar la lista de tareas en el servidor.");
+		}
+	}
+
+
+	function getTodoListFromServer() {
+		try {
+			fetch(`https://playground.4geeks.com/apis/fake/todos/user/${user}`)
+			.then(response => response.json())
+			.then(data => {
+				setTodos(() => {
+					return data.map(todo => {
+						return {label: todo.label, done: todo.done};
+					})
+				})
+			})
+			.catch(error => {
+				console.log(error);
+				throw error;
+			});
+		} catch (error) {
+			alert("Error al reiniciar la lista de tareas en el servidor.");
+		}
+	}
+
 
 	function addTodo(e) {
 		if (e.key === "Enter") {
-			setTodos([...todos, newTodo]);
-			setNewTodo("");
+			addTodoOnServer(newTodo);
+			setNewTodo({label: "", done: false});
 		}
 	}
 
 	function deleteTodo(i) {
-		setTodos(todos.filter((todo, index) => index !== i));
+		removeTodoOnServer(i);
 	}
 
 
@@ -29,15 +140,15 @@ const Home = () => {
 					style={{"--bs-text-opacity": 0.25}}
 					placeholder="Enter your todo"
 					autoComplete="off"
-					value={newTodo}
-					onChange={e => setNewTodo(e.target.value)}
+					value={newTodo.label}
+					onChange={e => setNewTodo({label: e.target.value, done: false})}
 					onKeyDown={addTodo}
 				/>
 
 				<ul className="bg-white m-0 list-unstyled">
 					{todos.map((todo, index) => {
 						return (
-							<Task key={index} id={index} task={todo} deleteHandler={deleteTodo}></Task>
+							<Task key={index} id={index} task={todo.label} deleteHandler={deleteTodo}></Task>
 						)
 					})}
 				</ul>
